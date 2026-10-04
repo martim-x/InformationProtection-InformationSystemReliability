@@ -16,6 +16,7 @@
   7. Программа нечувствительна к длине сообщения — работает для любого k.
 """
 
+from itertools import combinations
 import random
 
 
@@ -375,8 +376,18 @@ def main() -> None:
         syndrome_value = int(bits_to_str(syndrome), 2)
         print(f"Синдром S = {bits_to_str(syndrome)} = {syndrome_value}")
 
+        # Нулевой синдром при двух ошибках — необнаруживаемая ошибка.
+        # Проверяем реальное расхождение, а не доверяем синдрому.
         if syndrome_value == 0:
-            print("Результат: ошибок нет (S = 0), слово принято верно.")
+            if error_count == 0:
+                print("Результат: S = 0, ошибок действительно нет — верно.")
+            else:
+                print("Результат: S = 0, но в слове есть ошибки!")
+                print("Это НЕОБНАРУЖИВАЕМАЯ ошибка: сумма двух столбцов H")
+                print("дала нулевой синдром. Декодер считает слово верным,")
+                print("а Yn != Xn.")
+                print(f"Yn = {bits_to_str(yn)}")
+                print(f"Xn = {bits_to_str(xn)}")
             continue
 
         # одиночная ошибка — исправляется
@@ -385,7 +396,7 @@ def main() -> None:
             error_vector = build_error_vector(n, [pos])
             fixed = correct_word(yn, error_vector)
 
-            print(f"Ненулевой синдром -> одиночная ошибка.")
+            print("Ненулевой синдром -> одиночная ошибка.")
             print(f"Ошибочный бит: позиция {pos + 1} (индекс {pos})")
             print(f"Вектор ошибки En = {bits_to_str(error_vector)}")
             print(f"Исправлено Xn = Yn + En = {bits_to_str(fixed)}")
@@ -393,14 +404,78 @@ def main() -> None:
         else:
             # двойная ошибка — синдром указывает на ложную позицию
             pos = find_error_position(syndrome, matrix_h)
-            print(f"Ненулевой синдром при двух ошибках -> ошибочная "
-                  f"коррекция.")
-            print(f"Синдром указывает на позицию {pos + 1}, "
-                  f"но реальных ошибок две.")
-            print("Код с dmin = 3 обнаруживает одиночную ошибку, "
-                  "но двойную исправить не может.")
-            print("Решение: расширенный код с dmin = 4 (проверка общей "
-                  "чётности) обнаруживает двойную ошибку.")
+            real = sorted(p + 1 for p in positions)
+            guessed = pos + 1
+            if guessed in real:
+                verdict = "один из двух битов угадан, второй остался"
+            else:
+                verdict = "указана позиция, где ошибки нет"
+            print("Ненулевой синдром при двух ошибках -> ОШИБОЧНАЯ КОРРЕКЦИЯ.")
+            print(f"Синдром указывает на позицию {guessed}; реальные ошибки: {real}")
+            print(f"Итог: {verdict}. Слово после коррекции неверно: "
+                  f"{correct_word(yn, build_error_vector(n, [pos])) != xn}")
+            print("Решение: расширенный код с dmin = 4 (общая чётность) "
+                  "обнаруживает двойную ошибку, но не исправляет.")
+
+    # --- Задание 6. Исчерпывающий анализ по кратности ---------------------
+    print("\n" + "=" * 62)
+    print("ЗАДАНИЕ 6: СВОДНЫЙ АНАЛИЗ ПО КРАТНОСТИ ОШИБОК (все пары)")
+    print("=" * 62)
+
+    total = n * (n - 1) // 2
+    detected = 0
+    corrected = 0
+    silent = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            yn_t = list(xn)
+            yn_t[i] ^= 1
+            yn_t[j] ^= 1
+            s = calc_syndrome(yn_t[k:], calc_yr_from_yk(yn_t[:k], p_prime))
+            if not any(s):
+                silent += 1
+                continue
+            detected += 1
+            p = find_error_position(s, matrix_h)
+            if correct_word(yn_t, build_error_vector(n, [p])) == xn:
+                corrected += 1
+
+    print(f"Всего пар позиций (двойная ошибка): {total}")
+    print(f"Обнаружено ненулевым синдромом:      {detected}")
+    print(f"Не обнаружено (S = 0):               {silent}")
+    print(f"Из обнаруженных исправлено верно:    {corrected}")
+    print(f"Доля обнаружения:  {detected / total:.4f}")
+    print(f"Доля исправления:  {corrected / total:.4f}")
+
+    # --- Задание 6. Тройные ошибки: часть неразличима ---------------------
+    def syndrome_at(word: list[int], pos: int) -> list[int]:
+        """Синдром слова word при инверсии бита в позиции pos."""
+        probe = list(word)
+        probe[pos] ^= 1
+        return calc_syndrome(probe[k:], calc_yr_from_yk(probe[:k], p_prime))
+
+    triples = list(combinations(range(n), 3))
+    blind = []
+    for a, b, c in triples:
+        s = [
+            syndrome_at(xn, a)[i] ^ syndrome_at(xn, b)[i] ^ syndrome_at(xn, c)[i]
+            for i in range(r)
+        ]
+        if not any(s):
+            blind.append((a, b, c))
+
+    print(f"\nВсего троек позиций:                {len(triples)}")
+    print(f"Не обнаружено (S = 0):             {len(blind)}")
+    print(f"Примеры таких троек (позиции): "
+          f"{[tuple(p + 1 for p in t) for t in blind[:5]]}")
+
+    print("\nВывод по dmin = 3 (t_и = 1, t_о = 1 по формулам (8) и (9)):")
+    print("  1 ошибка  — обнаруживается и исправляется ВСЕГДА (n из n).")
+    print("  2 ошибки  — обнаруживается ВСЕГДА: сумма двух РАЗНЫХ столбцов H")
+    print("              не может быть нулём. Но исправить нельзя —")
+    print("              синдром указывает на одну позицию, а ошибок две.")
+    print("  3 ошибки  — часть троек неразличима с корректным словом:")
+    print("              сумма трёх столбцов может дать нулевой синдром.")
 
 
 if __name__ == "__main__":
