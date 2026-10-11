@@ -1,23 +1,5 @@
-#!/usr/bin/env python3
-"""
-Лабораторная работа № 4: Избыточное кодирование данных в информационных
-системах. Код Хемминга.
-
-Исходное сообщение: сумма кодов ASCII первой буквы имени (T) и фамилии (M)
-                   T = 84, M = 77, сумма = 161 = 10100001 (8 бит).
-
-Практическое задание (п. 4.2):
-  1. Сформировать информационное сообщение в двоичном виде (k = 8 бит).
-  2. Построить проверочную матрицу Хемминга H (dmin = 3).
-  3. Вычислить избыточные символы Xr.
-  4. Ввести 0, 1, 2 ошибки в случайные позиции.
-  5. Пересчитать избыточные символы принятого слова Yr' (ур. 4.6).
-  6. Вычислить и проанализировать синдром, исправить одиночную ошибку.
-  7. Программа нечувствительна к длине сообщения — работает для любого k.
-"""
-
-from itertools import combinations
 import random
+from itertools import combinations
 
 
 # --------------------------------------------------------------------------
@@ -35,7 +17,7 @@ def calc_r(k: int) -> int:
         Минимальное подходящее значение r.
     """
     r = 1
-    while 2 ** r < k + r + 1:
+    while 2**r < k + r + 1:
         r = r + 1
     return r
 
@@ -81,13 +63,13 @@ def build_p_prime(k: int, r: int) -> list[list[int]]:
     Returns:
         Матрица P' — список из k столбцов длины r.
     """
-    p_prime = []      # список столбцов P'
+    p_prime = []  # список столбцов P'
 
     for wt in range(2, r + 1):
         # все числа с текущим весом wt, в порядке возрастания
-        for num in range(3, 2 ** r):
+        for num in range(3, 2**r):
             bits = bin(num)[2:].zfill(r)
-            if bits.count('1') == wt:
+            if bits.count("1") == wt:
                 p_prime.append([int(bit) for bit in bits])
                 if len(p_prime) == k:
                     return p_prime
@@ -290,15 +272,17 @@ def main() -> None:
     print("=" * 62)
 
     # --- Задание 1. Формирование информационного сообщения -----------------
-    letter_name = ord('T')       # T — первая буква имени Тимофей
-    letter_surname = ord('M')    # M — первая буква фамилии Марушко
+    letter_name = ord("T")  # T — первая буква имени Тимофей
+    letter_surname = ord("M")  # M — первая буква фамилии Марушко
     message_value = letter_name + letter_surname
 
     xk = [int(bit) for bit in bin(message_value)[2:].zfill(8)]
 
     print("\n--- ЗАДАНИЕ 1: информационное сообщение ---")
     print(f"ASCII 'T' (имя)     = {letter_name}  = {bin(letter_name)[2:].zfill(8)}")
-    print(f"ASCII 'M' (фамилия) = {letter_surname}  = {bin(letter_surname)[2:].zfill(8)}")
+    print(
+        f"ASCII 'M' (фамилия) = {letter_surname}  = {bin(letter_surname)[2:].zfill(8)}"
+    )
     print(f"Сумма кодов         = {message_value} = {bits_to_str(xk)}")
     print(f"Длина сообщения k   = {len(xk)} бит")
 
@@ -312,15 +296,13 @@ def main() -> None:
 
     print("\n--- ЗАДАНИЕ 2: параметры кода и матрица H ---")
     print(f"k = {k}, r = {r}, n = {n}")
-    print(f"Проверка: 2^{r} = {2 ** r} >= n + 1 = {n + 1}  ->  "
-          f"{2 ** r >= n + 1}")
+    print(f"Проверка: 2^{r} = {2 ** r} >= n + 1 = {n + 1}  ->  " f"{2 ** r >= n + 1}")
     print(f"Относительная избыточность Rr = r/k = {r / k:.4f}")
     print(f"Скорость кода Rk = k/n = {k / n:.4f}")
 
     print("\nПодматрица P' (столбцы — номера позиций в двоичном виде):")
     for col in range(len(p_prime)):
-        print(f"  позиция {col + 1:2d} (индекс {col}): "
-              f"{bits_to_str(p_prime[col])}")
+        print(f"  позиция {col + 1:2d} (индекс {col}): " f"{bits_to_str(p_prime[col])}")
 
     print_matrix(matrix_h, "Проверочная матрица H = [P' | I]")
 
@@ -341,8 +323,10 @@ def main() -> None:
             if xn[col] == 1 and row[col] == 1:
                 pairs = pairs + 1
         check.append(pairs % 2)
-    print(f"Проверка H * Xn^T = {bits_to_str(check)} "
-          f"(нулевой синдром подтверждает корректность кодирования)")
+    print(
+        f"Проверка H * Xn^T = {bits_to_str(check)} "
+        f"(нулевой синдром подтверждает корректность кодирования)"
+    )
 
     # --- Задание 4-6. Внесение ошибок и их исправление ---------------------
     print("\n--- ЗАДАНИЯ 4-6: моделирование ошибок ---")
@@ -360,8 +344,10 @@ def main() -> None:
         yk = yn[:k]
         yr = yn[k:]
 
-        print(f"Позиции ошибок (нумерация с 1): "
-              f"{[pos + 1 for pos in sorted(positions)]}")
+        print(
+            f"Позиции ошибок (нумерация с 1): "
+            f"{[pos + 1 for pos in sorted(positions)]}"
+        )
         print(f"Xn (отправлено)  = {bits_to_str(xn)}")
         print(f"Yn (принято)     = {bits_to_str(yn)}")
         print(f"  Yk = {bits_to_str(yk)}")
@@ -412,10 +398,14 @@ def main() -> None:
                 verdict = "указана позиция, где ошибки нет"
             print("Ненулевой синдром при двух ошибках -> ОШИБОЧНАЯ КОРРЕКЦИЯ.")
             print(f"Синдром указывает на позицию {guessed}; реальные ошибки: {real}")
-            print(f"Итог: {verdict}. Слово после коррекции неверно: "
-                  f"{correct_word(yn, build_error_vector(n, [pos])) != xn}")
-            print("Решение: расширенный код с dmin = 4 (общая чётность) "
-                  "обнаруживает двойную ошибку, но не исправляет.")
+            print(
+                f"Итог: {verdict}. Слово после коррекции неверно: "
+                f"{correct_word(yn, build_error_vector(n, [pos])) != xn}"
+            )
+            print(
+                "Решение: расширенный код с dmin = 4 (общая чётность) "
+                "обнаруживает двойную ошибку, но не исправляет."
+            )
 
     # --- Задание 6. Исчерпывающий анализ по кратности ---------------------
     print("\n" + "=" * 62)
@@ -466,8 +456,10 @@ def main() -> None:
 
     print(f"\nВсего троек позиций:                {len(triples)}")
     print(f"Не обнаружено (S = 0):             {len(blind)}")
-    print(f"Примеры таких троек (позиции): "
-          f"{[tuple(p + 1 for p in t) for t in blind[:5]]}")
+    print(
+        f"Примеры таких троек (позиции): "
+        f"{[tuple(p + 1 for p in t) for t in blind[:5]]}"
+    )
 
     print("\nВывод по dmin = 3 (t_и = 1, t_о = 1 по формулам (8) и (9)):")
     print("  1 ошибка  — обнаруживается и исправляется ВСЕГДА (n из n).")
