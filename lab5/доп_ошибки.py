@@ -1083,7 +1083,7 @@ def main():
 
     print_stats_table("6.1. Код Хемминга", ham, dmin_ham, 1, 1, rep_ham)
     print_stats_table("6.2. Итеративный код, только строки и столбцы",
-                      iter_base, dmin_base, 1, 2, rep_base)
+                      iter_base, dmin_base, 1, 1, rep_base)
     print_stats_table("6.3. Итеративный код с Xhv",
                       iter_xhv, dmin_xhv, 1, 2, rep_xhv)
     print_stats_table("6.4. Итеративный код с дополнительными проверками",
@@ -1124,7 +1124,7 @@ def main():
         ("n (длина слова)", ham.n, iter_base.n, iter_xhv.n, iter_d5.n),
         ("dmin (измерено)", dmin_ham, dmin_base, dmin_xhv, dmin_d5),
         ("t_и = (d-1)/2 или (d-2)/2", 1, 1, 1, 2),
-        ("t_о = (d-1)/2 или d/2", 1, 2, 2, 2),
+        ("t_о = (d-1)/2 или d/2", 1, 1, 2, 2),
     ]
     for label, a, b, c, d in rows:
         print(f"{label:34s} {a:12d} {b:12d} {c:12d} {d:12d}")
