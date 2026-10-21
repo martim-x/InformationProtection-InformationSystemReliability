@@ -244,10 +244,10 @@ c1 ⊕ c2 = a1 ⊕ a2
 
 ## Приложение: исходный код (main.py)
 
-Файл `lab3/main.py` содержит полную реализацию всех пунктов практического задания:
+Файл `lab3/app/main.py` содержит полную реализацию всех пунктов практического задания:
 - Собственный base64 кодек (`base64_encode`, `base64_decode`)
 - Энтропийный анализ (`frequency_analysis`, `hartley_entropy`, `shannon_entropy`, `redundancy`)
 - XOR буферов с padding (`xor_buffers`)
 - Демонстрация и сравнение со стандартной библиотекой
 
-Запуск: `python3 lab3/main.py`
+Запуск: `python3 lab3/app/main.py`

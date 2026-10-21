@@ -6,14 +6,14 @@ from openpyxl.chart.label import DataLabelList
 from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 
-from entropy_lab import OUTPUT, counter_of
+from entropy_lab import INPUT, OUTPUT, counter_of
 
 # Пары (лист в Excel, файл документа, ключ алфавита, подпись).
 SEQUENCES = [
-    ("Латиница", f"{os.path.dirname(__file__)}/input/latin.txt", "latin", "Латиница"),
+    ("Латиница", f"{INPUT}/latin.txt", "latin", "Латиница"),
     (
         "Кириллица",
-        f"{os.path.dirname(__file__)}/input/cyrillic.txt",
+        f"{INPUT}/cyrillic.txt",
         "cyrillic",
         "Кириллица",
     ),

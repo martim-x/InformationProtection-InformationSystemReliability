@@ -1,9 +1,12 @@
 import collections
 import math
+import os
 
-BASE = "."
-INPUT = f"{BASE}/input"
-OUTPUT = f"{BASE}/output"
+# Пути строятся от расположения скрипта, чтобы приложение запускалось
+# из любого каталога: входные данные и результаты лежат в build/.
+BASE = os.path.dirname(os.path.abspath(__file__))
+INPUT = f"{BASE}/../build/input"
+OUTPUT = f"{BASE}/../build/output"
 
 # Алфавиты, по которым фильтруется текст документа.
 ALPHABETS = {
