@@ -216,6 +216,41 @@ def show_plain(codes):
     print("  совпадает с Xk: {}".format(rec == XK))
 
 
+def block_interleave(bits, rows):
+    """Блочный перемежитель по рис. 7.1 методички: биты пишутся строками
+    таблицы из `rows` строк, читаются по столбцам."""
+    bits = list(bits)
+    cols = -(-len(bits) // rows)
+    bits += ["0"] * (rows * cols - len(bits))
+    out = []
+    for c in range(cols):
+        for r in range(rows):
+            out.append(bits[r * cols + c])
+    return "".join(out)
+
+
+def show_primer():
+    """Пример 7.1 методички: 5 блоков по 5 бит, таблица 5 x 5."""
+    blocks = ["10101", "10011", "00110", "10001", "00001"]
+    src = "".join(blocks)
+    print("Пример из п. 7.1 методички: последовательность делится на блоки")
+    print("по {} бит, каждый блок пишется в свою строку.".format(len(blocks[0])))
+    print("         " + "  ".join("c{}".format(c + 1) for c in range(5)))
+    for i, b in enumerate(blocks, 1):
+        print("   стр{:2d}   ".format(i) + "   ".join(b))
+    print()
+    print("Входная последовательность : " + src)
+    print("После перемежения (столбцы): " + block_interleave(src, len(blocks)))
+    print("Глубина перемежения d = m - 1 = {} (второй символ станет шестым)".format(
+        len(blocks) - 1))
+    print()
+    seq = "10111010011001100100"
+    print("Контрольный вопрос 5: вход " + seq)
+    for rows, cols in ((5, 4), (4, 5), (5, 5), (4, 4)):
+        src2 = seq[:rows * cols] if len(seq) >= rows * cols else seq + "0" * (rows * cols - len(seq))
+        print("   таблица {}x{}: {}".format(rows, cols, block_interleave(src2, rows)))
+
+
 def show_shuffle(codes):
     m = len(codes)
     shuf = transmit(codes, m)
@@ -234,10 +269,60 @@ def show_shuffle(codes):
     print("  совпадает с Xk: {}".format(rec == XK))
 
 
-def experiment(trials=35, lengths=(3, 5, 6, 8), depths=(1, 2, 3, 4, 6, 12)):
-    """Случайное положение пакета: эффективность перемежения по глубине."""
+def experiment(trials=35, lengths=(3, 5, 6, 8), depth=DEPTH):
+    """П. 2 задания методички: для каждой длины пакета 35 случайных ситуаций,
+    сравнение переданной и восстановленной последовательностей без перемежения
+    и с перемежением."""
     codes = encode_stream(XK)
-    print("Эксперимент: {} случайных положений пакета на каждую длину".format(trials))
+    total = len(codes) * N
+    print("Эксперимент по п. 2 задания: {} случайных положений пакета".format(trials))
+    print("на каждую длину, сравнение без перемежения и с матрицей {} x {}".format(
+        len(codes), N))
+    print()
+
+    def run(bits, is_plain):
+        if is_plain:
+            return receive_plain(bits)
+        return receive(bits, depth, len(codes))
+
+    print("  b | без перемежения      | с перемежением        | остаток")
+    print("    | восст. ложн.  отказ  | восст. ложн.  отказ   | бит")
+    print("  --+----------------------+-----------------------+--------")
+    for b in lengths:
+        stats = {}
+        for is_plain in (True, False):
+            full = false = fail = 0
+            resid = 0.0
+            for _ in range(trials):
+                if is_plain:
+                    src = [int(ch) for ch in bits_of(codes)]
+                else:
+                    src = transmit(codes, depth)
+                start = random.randrange(0, total - b + 1)
+                rec, _, refused = run(apply_burst(src, start, b), is_plain)
+                if rec == XK:
+                    full += 1
+                else:
+                    resid += sum(1 for x, y in zip(rec, XK) if x != y)
+                    if refused:
+                        fail += 1
+                    else:
+                        false += 1
+            stats[is_plain] = (full, false, fail, resid / trials)
+        free, fls, fl, _ = stats[True]
+        shf, shf_false, shf_fail, shf_resid = stats[False]
+        print("  {} | {:4d}   {:4d}   {:4d}   | {:4d}   {:4d}   {:4d}    | {:6.1f}".format(
+            b, free, fls, fl, shf, shf_false, shf_fail, shf_resid))
+    print()
+    print("  восст. – сообщение совпало с Xk; ложн. – декодер «исправил»")
+    print("  кратный пакет как одиночную ошибку; отказ – синдром не найден;")
+    print("  остаток – среднее число неверных информационных битов на опыт.")
+
+
+def depth_effect(trials=35, lengths=(3, 5, 6, 8), depths=(1, 2, 3, 4, 6, 12)):
+    """Эффективность перемежения в зависимости от глубины (числа строк)."""
+    codes = encode_stream(XK)
+    print("Эффективность перемежения: {} случайных положений".format(trials))
     print("Доля полностью восстановленных сообщений, % (m = 1 – без перемежения)")
     header = "  b \\ m |" + "".join("{:>7d}".format(d) for d in depths)
     print(header)
@@ -253,11 +338,12 @@ def experiment(trials=35, lengths=(3, 5, 6, 8), depths=(1, 2, 3, 4, 6, 12)):
                 good += rec == XK
             row.append(100.0 * good / trials)
         print("  {:5d} |".format(b) + "".join("{:>6.0f}%".format(v) for v in row))
-    print("  b – длина пакета ошибок, m – глубина перемежения")
-    print("  dmin = 4 -> t_испр = 1, поэтому пакет исправляется при m >= b")
+    print("  b – длина пакета ошибок, m – число строк матрицы")
+    print("  dmin = 4 -> t_испр = 1, поэтому пакет исправляется при b <= m")
 
 
-MODES = ("all", "code", "syndromes", "matrix", "plain", "shuffle", "experiment")
+MODES = ("all", "code", "syndromes", "matrix", "primer", "plain", "shuffle",
+         "experiment", "depth")
 
 
 def main():
@@ -272,6 +358,9 @@ def main():
     if mode in ("all", "syndromes"):
         show_syndromes()
         print()
+    if mode in ("all", "primer"):
+        show_primer()
+        print()
     if mode in ("all", "matrix"):
         show_matrix(codes)
         print()
@@ -283,6 +372,9 @@ def main():
         print()
     if mode in ("all", "experiment"):
         experiment()
+        print()
+    if mode in ("all", "depth"):
+        depth_effect()
 
 
 if __name__ == "__main__":

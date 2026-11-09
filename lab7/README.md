@@ -34,7 +34,29 @@
 ## Запуск
 
 ```bash
-python3 lab7/app/main.py
+python3 lab7/app/main.py              # полный прогон
+python3 lab7/app/main.py code         # параметры кода и кодовые слова
+python3 lab7/app/main.py syndromes    # таблица синдромов
+python3 lab7/app/main.py primer       # пример перемежения 5 x 5 из п. 7.1
+python3 lab7/app/main.py matrix       # матрица перемежения 12 x 7
+python3 lab7/app/main.py plain        # передача без перемежения
+python3 lab7/app/main.py shuffle      # передача с перемежением
+python3 lab7/app/main.py experiment   # п. 2: 35 ситуаций на длину, сравнение
+python3 lab7/app/main.py depth        # эффективность по глубине m
+```
+
+## Эксперимент по п. 2 задания
+
+35 случайных положений пакета на каждую длину, сравнение переданной и
+восстановленной последовательностей:
+
+```
+  b | без перемежения      | с перемежением        | остаток
+    | восст. ложн.  отказ  | восст. ложн.  отказ   | бит
+  3 |    0     25     10   |   35      0      0    |    0.0
+  5 |    0     18     17   |   35      0      0    |    0.0
+  6 |    0     12     23   |   35      0      0    |    0.0
+  8 |    0     11     24   |   35      0      0    |    0.0
 ```
 
 ## Результат на задании с листка
@@ -76,6 +98,6 @@ python3 lab7/app/main.py
 
 ## Отчёт
 
-- модель – `build/report.json`, скриншоты прогонов – `build/скрины/` (6 шт., сняты из реального окна Terminal);
+- модель – `build/report.json`, скриншоты прогонов – `build/скрины/` (8 шт., сняты из реального окна Terminal);
 - сборка: `cd lab7/build && PYTHONPATH=~/Documents/VisualStudioCodeRepos/BstuReportBuilder ~/Documents/VisualStudioCodeRepos/BstuReportBuilder/venv/bin/python -m app build report.json -o ../lab7.docx --check --pdf`;
-- результат: `lab7/lab7.docx` (22 страницы) + `lab7/lab7.pdf` для контроля вёрстки; `app check` без замечаний, `analyze` без нарушений границ рисунков.
+- результат: `lab7/lab7.docx` (25 страниц) + `lab7/lab7.pdf` для контроля вёрстки; `app check` без замечаний, `analyze` без нарушений границ рисунков.
